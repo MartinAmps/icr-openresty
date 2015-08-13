@@ -1,8 +1,8 @@
 #!/bin/bash
 
 ICR_VERSION=0.1
-NPS_VERSION=1.9.32.3
-OR_VERSION=1.7.7.2
+NPS_VERSION=1.9.32.6
+OR_VERSION=1.7.10.2
 INSTALL=/tmp/openresty/$OR_VERSION
 DEBUG=""
 
@@ -25,6 +25,11 @@ echo "Unarchiving..."
 tar zxf ngx_openresty-${OR_VERSION}.tar.gz
 cd ngx_openresty-${OR_VERSION}
 
+echo "Downloading push_stream_module"
+
+git clone https://github.com/wandenberg/nginx-push-stream-module.git
+NGINX_PUSH_STREAM_MODULE_PATH=$PWD/nginx-push-stream-module
+
 echo "Downloading PageSpeed..."
 if [ ! -f release-${NPS_VERSION}-beta.zip ]; then
 	wget https://github.com/pagespeed/ngx_pagespeed/archive/release-${NPS_VERSION}-beta.zip
@@ -34,7 +39,11 @@ echo "Unarchiving..."
 
 unzip release-${NPS_VERSION}-beta.zip
 cd ngx_pagespeed-release-${NPS_VERSION}-beta/
-wget https://dl.google.com/dl/page-speed/psol/${NPS_VERSION}.tar.gz
+
+if [ ! -f ${NPS_VERSION}.tar.gz ]; then
+	wget https://dl.google.com/dl/page-speed/psol/${NPS_VERSION}.tar.gz
+fi
+
 tar -xzvf ${NPS_VERSION}.tar.gz
 
 cd ..
@@ -57,8 +66,9 @@ echo "Configuring..."
 	--with-http_stub_status_module \
 	--with-http_secure_link_module \
 	--with-http_geoip_module \
-	--add-module=ngx_pagespeed-release-${NPS_VERSION}-beta \
-	--sbin-path=/usr/sbin/nginx
+        --add-module=ngx_pagespeed-release-${NPS_VERSION}-beta \
+        --add-module=nginx-push-stream-module \
+	--sbin-path=/usr/sbin/nginx \
 	--conf-path=/etc/nginx/nginx.conf \
 	--lock-path=/var/lock/nginx.lock \
 	--pid-path=/run/nginx.pid \
@@ -97,4 +107,4 @@ fpm -s dir \
 	--conflicts nginx-extras \
 	--conflicts nginx-full \
 	--conflicts nginx-light \
-	etc run var usr
+	etc var usr run
