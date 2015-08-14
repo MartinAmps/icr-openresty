@@ -6,6 +6,8 @@ OR_VERSION=1.7.10.2
 INSTALL=/tmp/openresty/$OR_VERSION
 DEBUG=""
 
+rm -rf $INSTALL
+
 echo "Checking/Installing dependencies..."
 
 apt-get update
@@ -37,14 +39,14 @@ fi
 
 echo "Unarchiving..."
 
-unzip release-${NPS_VERSION}-beta.zip
+unzip -oq release-${NPS_VERSION}-beta.zip
 cd ngx_pagespeed-release-${NPS_VERSION}-beta/
 
 if [ ! -f ${NPS_VERSION}.tar.gz ]; then
 	wget https://dl.google.com/dl/page-speed/psol/${NPS_VERSION}.tar.gz
 fi
 
-tar -xzvf ${NPS_VERSION}.tar.gz
+tar -xzf ${NPS_VERSION}.tar.gz
 
 cd ..
 
@@ -86,6 +88,18 @@ echo "Installing to ${INSTALL}"
 
 make install DESTDIR=$INSTALL
 mkdir -p $INSTALL/var/lib/nginx
+mkdir -p $INSTALL/var/log/nginx
+
+echo "Setting up configs/init scripts"
+
+cd ..
+
+cp $PWD/configs/nginx.conf $INSTALL/etc/nginx/nginx.conf
+mkdir $INSTALL/etc/nginx/sites
+
+mkdir $INSTALL/etc/init.d
+cp $PWD/configs/nginx $INSTALL/etc/init.d/nginx
+chmod +x $INSTALL/etc/init.d/nginx
 
 cd ~
 
